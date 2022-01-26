@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
-import { attemptToExecuteRequests, NetworkRequest } from '@/utils/network-utils'
+import { attemptToExecuteRequest, attemptToExecuteRequests, NetworkRequest } from '@/utils/network-utils'
 
 export const useNetworkStore = defineStore('network', {
     state: () => {
@@ -21,7 +21,16 @@ export const useNetworkStore = defineStore('network', {
             this.isConnected = connectionState
         },
         addPendingRequest(request: NetworkRequest) {
-            this.pendingRequests.push(request)
+            if (!this.isConnected) {
+                this.pendingRequests.push(request)
+                return
+            }
+
+            attemptToExecuteRequest(request).then((executed) => {
+                if (!executed) {
+                    this.pendingRequests.push(request)
+                }
+            })
         },
         async executePendingRequests() {
             if (!this.isConnected) {
