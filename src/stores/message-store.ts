@@ -10,26 +10,50 @@ export const useMessageStore = defineStore('message', {
         }
     },
     actions: {
-        setupMessageStore() {
-            this.prepareLoadMessages()
+        async setupMessageStore() {
+            await this.prepareLoadMessages()
         },
-        prepareLoadMessages() {
-            this.fetchFromLocalStorage()
+        async prepareLoadMessages() {
+            await this.fetchFromLocalStorage()
 
             const networkStore = useNetworkStore()
-            networkStore.addPendingRequest({
+            const messages: Message[] = await networkStore.executeRequest({
                 requestConfig: {
                     url: '/message',
                     method: 'GET',
                 },
-                onSuccess: (data: Message[]) => {
-                    this.loadMessages(data)
-                },
             })
+
+            this.loadMessages(messages)
         },
         loadMessages(messages: Message[]) {
             this.messages = messages
             this.persistToLocalStorage().then()
+        },
+        appendMessage(message: Message) {
+            this.messages.push(message)
+            this.persistToLocalStorage().then()
+        },
+        markMessageAsRead(id: number) {
+            const message = this.messages.find((m) => m.id === id)
+            if (!message || message.read) {
+                return
+            }
+
+            message.read = true
+
+            // Setup Network Request
+            const networkStore = useNetworkStore()
+            networkStore.addPendingRequest({
+                requestConfig: {
+                    url: `/message/${id}`,
+                    method: 'PUT',
+                    data: message,
+                },
+                onSuccess: () => {
+                    this.persistToLocalStorage().then()
+                },
+            })
         },
         async fetchFromLocalStorage() {
             const { value } = await Storage.get({ key: 'messages' })

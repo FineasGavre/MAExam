@@ -1,5 +1,5 @@
 <template>
-    <ion-item v-if="item" :routerLink="'/message/' + item.id" :detail="false" class="list-item">
+    <ion-item v-if="item" :detail="false" class="list-item" @click="markAsRead">
         <div slot="start" :class="!item.read ? 'dot dot-unread' : 'dot'"></div>
         <ion-label class="ion-text-wrap">
             <h2>
@@ -22,6 +22,7 @@
     import { computed, toRefs } from 'vue'
     import { Message } from '@/interfaces/message'
     import { chevronForward } from 'ionicons/icons'
+    import { useMessageStore } from '@/stores/message-store'
 
     const props = defineProps<{
         item: Message
@@ -29,6 +30,12 @@
 
     const { item } = toRefs(props)
     const messageDate = computed(() => moment(item.value.created).format('DD MM YYYY'))
+
+    const messageStore = useMessageStore()
+
+    const markAsRead = () => {
+        messageStore.markMessageAsRead(item.value.id)
+    }
 
     const isIos = () => {
         const win = window as any
