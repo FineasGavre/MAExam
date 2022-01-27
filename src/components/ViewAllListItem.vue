@@ -29,7 +29,7 @@
     }>()
 
     const { item } = toRefs(props)
-    const messageDate = computed(() => moment(item.value.created).format('DD MM YYYY'))
+    const messageDate = computed(() => moment(item.value.created).format('DD-MM-YYYY HH:MM'))
 
     const messageStore = useMessageStore()
 
